@@ -56,72 +56,78 @@ def get_file_name_prefix(filename):
         if filename.lower().startswith(line.lower()):
             return line.strip()
     return None
-	
+    
 
 if __name__ == '__main__':
-	cur_folder = os.path.abspath('')
-	
-	# Convert PDFs to Images
-	files = find_files_ignore_case('*.pdf')
-	for pdf_file in files:
-		pdf_file = os.path.join(cur_folder, pdf_file)
-		print(pdf_file)
-		folder = convert_pdf_to_images(pdf_file)
-	
-	# Crop images
-	files = find_files_ignore_case('*.pdf')
-	for file in files:
-		folder = os.path.splitext(file)[0]
-		print(folder)
-		images = find_files_ignore_case('*', folder)
-		for image_file in images:
-			image_file = os.path.join(folder, image_file)
-			print(image_file)
-			crop_image_center(image_file, crop_left=180, crop_right=-40, crop_top=100, crop_bottom=40)
+    cur_folder = os.path.abspath('')
+    
+    # Convert PDFs to Images
+    print('Convert PDFs to images...')
+    files = find_files_ignore_case('*.pdf')
+    for pdf_file in files:
+        pdf_file = os.path.join(cur_folder, pdf_file)
+        print(pdf_file)
+        folder = convert_pdf_to_images(pdf_file)
+    
+    # Crop images
+    print('Crop images...')
+    files = find_files_ignore_case('*.pdf')
+    for file in files:
+        folder = os.path.splitext(file)[0]
+        print(folder)
+        images = find_files_ignore_case('*.jpg', folder)
+        images.sort()
+        print(images)
+        for image_file in images:
+            try:
+                image_file = os.path.join(folder, image_file)
+                crop_image_center(image_file, crop_left=160, crop_right=-40, crop_top=100, crop_bottom=20)
+            except:
+                pass
+    
+    # Copy Image *.jpg From Reference to Folder
+    files = find_files_ignore_case('*.pdf')
+    for file in files:
+        print(file)
+        folder = os.path.splitext(file)[0]
+        file_prefix = get_file_name_prefix(file)
+        print(file_prefix)
 
-	# Copy Image *.jpg From Reference to Folder
-	files = find_files_ignore_case('*.pdf')
-	for file in files:
-		print(file)
-		folder = os.path.splitext(file)[0]
-		file_prefix = get_file_name_prefix(file)
-		print(file_prefix)
+        # Copy Image *.jpg From Reference to Folder
+        source_files = find_files_ignore_case('{}*.jpg'.format(file_prefix), 'Reference')
 
-		# Copy Image *.jpg From Reference to Folder
-		source_files = find_files_ignore_case('{}*.jpg'.format(file_prefix), 'Reference')
+        for f in source_files:
+            f = os.path.join('Reference', f)
+            shutil.copy(f, folder)
+    
+    # Insert Images to Word
+    files = find_files_ignore_case('*.pdf')
+    for file in files:
+        folder = os.path.splitext(file)[0] 
+        word_file = folder+".docx"
 
-		for f in source_files:
-			f = os.path.join('Reference', f)
-			shutil.copy(f, folder)
-	
-	# Insert Images to Word
-	files = find_files_ignore_case('*.pdf')
-	for file in files:
-		folder = os.path.splitext(file)[0] 
-		word_file = folder+".docx"
+        document = Document()
 
-		document = Document()
+        # Copy from template docx
+        file_prefix = get_file_name_prefix(file)
+        files = find_files_ignore_case('{}*.docx'.format(file_prefix), 'Reference')
+        if files:
+            document = Document(os.path.join('Reference', files[0]))
+            document.add_section()
+        else:
+            document = Document()
+        document.save(word_file)
 
-		# Copy from template docx
-		file_prefix = get_file_name_prefix(file)
-		files = find_files_ignore_case('{}*.docx'.format(file_prefix), 'Reference')
-		if files:
-			document = Document(os.path.join('Reference', files[0]))
-			document.add_section()
-		else:
-			document = Document()
-		document.save(word_file)
+        section = document.sections[0]
+    #         width = section.page_width - section.left_margin - section.right_margin
+        height = section.page_height - section.top_margin - section.bottom_margin
 
-		section = document.sections[0]
-	#         width = section.page_width - section.left_margin - section.right_margin
-		height = section.page_height - section.top_margin - section.bottom_margin
+        images = find_files_ignore_case('*.jpg', folder)
+        for image_file in images:
+            image_file = os.path.join(folder, image_file)
+    #         document.add_picture(image_file, width=width)
+            document.add_picture(image_file, height=height)
 
-		images = find_files_ignore_case('*', folder)
-		for image_file in images:
-			image_file = os.path.join(folder, image_file)
-	#         document.add_picture(image_file, width=width)
-			document.add_picture(image_file, height=height)
-
-		document.save(word_file)
-			
-	
+        document.save(word_file)
+            
+    

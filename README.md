@@ -7,3 +7,15 @@ This project is to complement Typora by performs following:
 * Convert PDF file to images
 * Crop images to remove surrounding white space
 * Insert images to Word document, either from existing template file or new file. 
+
+
+
+## Setup
+
+Install Python libraries
+
+```bash
+pip install -r requirements.txt
+brew install poppler
+```
+
