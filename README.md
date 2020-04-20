@@ -19,3 +19,10 @@ pip install -r requirements.txt
 brew install poppler
 ```
 
+
+
+## To Run
+
+* Copy PDF files to the same folder as `create_word_from_pdf.py` file
+* Run command `python3 create_word_from_pdf.py`
+

@@ -81,7 +81,8 @@ if __name__ == '__main__':
         for image_file in images:
             try:
                 image_file = os.path.join(folder, image_file)
-                crop_image_center(image_file, crop_left=160, crop_right=-40, crop_top=100, crop_bottom=20)
+                crop_image_center(image_file, crop_left=160, 
+						crop_right=-40, crop_top=100, crop_bottom=20)
             except:
                 pass
     
