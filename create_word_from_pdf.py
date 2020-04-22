@@ -6,6 +6,7 @@ import shutil, os
 from docx import Document
 import fnmatch
 import re
+import shutil
 
 
 def find_files_ignore_case(which, where='.'):
@@ -51,12 +52,21 @@ def convert_pdf_to_images(file):
 
 def get_file_name_prefix(filename):
     with open('file_name_prefixes.txt') as f:
-        line = f.readline().strip()
-#         print(repr(filename.lower()), repr(line.lower()))
-        if filename.lower().startswith(line.lower()):
-            return line.strip()
+        for line in f:
+            line = line.strip()
+            if filename.lower().startswith(line.lower()):
+                return line.strip()
     return None
-    
+
+import errno, os, stat, shutil
+def handleRemoveReadonly(func, path, exc):
+  excvalue = exc[1]
+  if func in (os.rmdir, os.remove) and excvalue.errno == errno.EACCES:
+      os.chmod(path, stat.S_IRWXU| stat.S_IRWXG| stat.S_IRWXO) # 0777
+      func(path)
+  else:
+      raise
+      
 
 if __name__ == '__main__':
     cur_folder = os.path.abspath('')
@@ -82,7 +92,7 @@ if __name__ == '__main__':
             try:
                 image_file = os.path.join(folder, image_file)
                 crop_image_center(image_file, crop_left=160, 
-						crop_right=-40, crop_top=100, crop_bottom=20)
+                        crop_right=-40, crop_top=100, crop_bottom=20)
             except:
                 pass
     
@@ -107,11 +117,10 @@ if __name__ == '__main__':
         folder = os.path.splitext(file)[0] 
         word_file = folder+".docx"
 
-        document = Document()
-
         # Copy from template docx
         file_prefix = get_file_name_prefix(file)
         files = find_files_ignore_case('{}*.docx'.format(file_prefix), 'Reference')
+        print(file, file_prefix, files)
         if files:
             document = Document(os.path.join('Reference', files[0]))
             document.add_section()
@@ -131,4 +140,17 @@ if __name__ == '__main__':
 
         document.save(word_file)
             
-    
+    # Delete folders including its images
+    files = find_files_ignore_case('*.pdf')
+    for file in files:
+        folder = os.path.splitext(file)[0]
+        print('Deleting', folder, os.path.isdir(folder))
+        try:
+            files_in_dir = os.listdir(folder) 
+            for file in files_in_dir:                  # loop to delete each file in folder
+                os.remove(os.path.join(folder,file))
+            #os.rmdir(folder)
+            shutil.rmtree(folder, ignore_errors=False, onerror=handleRemoveReadonly)
+        except Exception as ex:
+            print('Error deleting', folder, ex)
+
